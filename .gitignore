@@ -13,3 +13,6 @@ test_classic_token.txt
 .vercel/
 !.vercel/project.json
 !.vercel/README.txt
+
+.vercel
+.env*
