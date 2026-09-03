@@ -1,23 +1,11 @@
 node_modules/
-node_modules/
 .next/
 .DS_Store
 qrcheck.svg
-
-# local admin-reset secrets (never commit)
 scripts/.env.reset
-
-# environment files (never commit — contain secrets)
-.env.local
-.env.example
-.env*
-.env.
-test_classic_token.txt
-
-
-# Environment files (local secrets — never commit)
 .env.local
 .env.example
 .env.prod_*
 .env.vercel*
+.env.*
 test_classic_token.txt
