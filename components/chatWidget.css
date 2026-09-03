@@ -1,0 +1,55 @@
+/* Self-contained, theme-independent chat widget — same look on every page
+   (the .lx navy/amber homepage and the .og-page warm city pages alike). */
+.cw-root { position: fixed; right: 20px; bottom: 20px; z-index: 60; display: flex; flex-direction: column; align-items: flex-end; gap: 12px; }
+.cw-bubble {
+  width: 56px; height: 56px; border-radius: 50%; border: none; cursor: pointer;
+  background: #1a2233; color: #fff; font-size: 24px; display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3); transition: transform 0.15s;
+}
+.cw-bubble:hover { transform: scale(1.06); }
+
+.cw-panel {
+  width: min(340px, calc(100vw - 40px)); height: min(480px, calc(100vh - 120px));
+  background: #fff; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+  display: flex; flex-direction: column; overflow: hidden; border: 1px solid #e3e7ee;
+}
+.cw-head { background: #1a2233; color: #fff; padding: 14px 16px; font-weight: 700; font-size: 14px; display: flex; justify-content: space-between; align-items: center; }
+.cw-close { background: none; border: none; color: #fff; font-size: 20px; cursor: pointer; line-height: 1; padding: 0 4px; }
+
+.cw-body { flex: 1 1 auto; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.cw-msg { max-width: 85%; padding: 9px 12px; border-radius: 12px; font-size: 13.5px; line-height: 1.45; }
+.cw-msg-bot { align-self: flex-start; background: #f4f7fb; color: #1a2233; border-bottom-left-radius: 4px; }
+.cw-msg-user { align-self: flex-end; background: #1a2233; color: #fff; border-bottom-right-radius: 4px; }
+
+.cw-quick { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.cw-quick-chip {
+  background: #fff; border: 1px solid #c7cedb; color: #1a2233; border-radius: 999px;
+  padding: 6px 12px; font-size: 12.5px; font-weight: 600; cursor: pointer;
+}
+.cw-quick-chip:hover { border-color: #1a2233; }
+
+.cw-capture { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+.cw-capture input {
+  padding: 9px 11px; border: 1px solid #c7cedb; border-radius: 8px; font-size: 13.5px; font-family: inherit; outline: none;
+}
+.cw-capture input:focus { border-color: #1a2233; }
+.cw-submit {
+  background: #ffb627; color: #1a2233; border: none; border-radius: 8px; padding: 10px;
+  font-weight: 700; font-size: 13.5px; cursor: pointer;
+}
+.cw-submit:disabled { opacity: 0.6; cursor: default; }
+.cw-error { color: #b23a3a; font-size: 12px; font-weight: 600; }
+
+.cw-inputrow { display: flex; gap: 8px; padding: 10px; border-top: 1px solid #e3e7ee; }
+.cw-inputrow input { flex: 1 1 auto; padding: 9px 12px; border: 1px solid #c7cedb; border-radius: 999px; font-size: 13.5px; outline: none; font-family: inherit; }
+.cw-inputrow input:focus { border-color: #1a2233; }
+.cw-inputrow button { width: 36px; height: 36px; border-radius: 50%; border: none; background: #1a2233; color: #fff; cursor: pointer; flex: 0 0 auto; }
+
+@media (max-width: 880px) {
+  /* City pages have a sticky mobile CTA bar (.og-mobile-cta) at the very
+     bottom — clear it so the bubble doesn't sit on top of/behind it. */
+  .cw-root { right: 14px; bottom: 72px; }
+}
+@media (max-width: 480px) {
+  .cw-panel { width: calc(100vw - 24px); max-height: calc(100vh - 160px); }
+}
