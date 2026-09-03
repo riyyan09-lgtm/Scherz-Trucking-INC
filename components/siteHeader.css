@@ -1,0 +1,181 @@
+/* Shared site header — reads the host page's --navy/--amber/--steel/--line
+   tokens when present (the .lx and .og-page palettes both define them),
+   falling back to sensible defaults so it also works standalone. */
+.sh-header {
+  position: sticky; top: 0; z-index: 30;
+  background: #fff;
+  border-bottom: 1px solid var(--line, #e3e7ee);
+}
+.sh-inner {
+  max-width: 1180px; margin: 0 auto; padding: 14px 24px;
+  display: flex; align-items: center; gap: 28px;
+}
+.sh-logo {
+  display: flex; align-items: center; gap: 8px; text-decoration: none;
+  color: var(--navy, #0b1f3a); font-weight: 800; font-size: 19px; letter-spacing: -0.01em;
+  flex: 0 0 auto;
+}
+/* Kept for any caller still rendering the old dot mark. */
+.sh-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--amber, #ffb627); display: inline-block; }
+
+/* Header logo image — sits left of the wordmark */
+.sh-logo-img { width: 28px; height: 28px; border-radius: 5px; object-fit: cover; flex-shrink: 0; }
+
+/* Wordmark: "Scherz Trucking" carries the weight, "INC" sits under it as
+   a small caps line so the full legal name is present without doubling the
+   lockup's width in the nav. */
+.sh-wordmark { display: flex; flex-direction: column; line-height: 1.05; }
+.sh-wordmark-sub {
+  font-size: 9px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+  opacity: 0.62;
+}
+@media (max-width: 380px) {
+  /* Very narrow phones: drop the second line rather than let the lockup
+     squeeze the burger off the bar. */
+  .sh-wordmark-sub { display: none; }
+}
+
+.sh-nav { display: flex; align-items: center; gap: 22px; flex: 1 1 auto; }
+.sh-nav-link {
+  background: none; border: none; text-decoration: none; cursor: pointer;
+  color: var(--steel, #33475b); font-size: 14.5px; font-weight: 600;
+  display: flex; align-items: center; gap: 4px; padding: 0; white-space: nowrap;
+}
+.sh-nav-link:hover { color: var(--navy, #0b1f3a); }
+.sh-caret { font-size: 10px; }
+
+.sh-drop { position: relative; }
+.sh-drop-menu {
+  position: absolute; top: calc(100% + 12px); left: 0; background: #fff;
+  border: 1px solid var(--line, #e3e7ee); border-radius: 10px; box-shadow: 0 16px 40px rgba(11,31,58,0.14);
+  padding: 8px; min-width: 180px; display: flex; flex-direction: column; gap: 2px;
+}
+.sh-drop-item {
+  text-decoration: none; color: var(--ink, #1a2233); font-size: 14px; font-weight: 600;
+  padding: 9px 12px; border-radius: 7px;
+}
+.sh-drop-item:hover { background: var(--soft, #f4f7fb); }
+.sh-drop-heading {
+  font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase;
+  letter-spacing: 0.04em; padding: 6px 12px;
+}
+
+.sh-cta {
+  flex: 0 0 auto; background: var(--amber, #ffb627); color: var(--navy, #0b1f3a);
+  font-weight: 700; font-size: 14px; text-decoration: none; padding: 10px 18px; border-radius: 8px;
+  white-space: nowrap;
+}
+.sh-cta:hover { filter: brightness(1.05); }
+
+.sh-burger {
+  display: none; flex: 0 0 auto; width: 34px; height: 34px; border: 1px solid var(--line, #e3e7ee);
+  border-radius: 8px; background: #fff; cursor: pointer; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+}
+.sh-burger span {
+  width: 16px; height: 2px; background: var(--navy, #0b1f3a); border-radius: 2px;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+/* Burger morphs into an X while the sheet is open. */
+.sh-burger.is-open span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+.sh-burger.is-open span:nth-child(2) { opacity: 0; }
+.sh-burger.is-open span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+
+.sh-mobile { display: none; }
+
+@media (max-width: 880px) {
+  .sh-nav { display: none; }
+  .sh-cta { display: none; }
+  .sh-burger { display: flex; }
+  .sh-mobile {
+    display: flex; flex-direction: column; gap: 2px; padding: 8px 20px 18px;
+    border-top: 1px solid var(--line, #e3e7ee); background: #fff;
+    /* The sheet can outgrow the viewport on short screens, so it scrolls
+       itself rather than pushing the page down. */
+    max-height: calc(100vh - 64px); overflow-y: auto; -webkit-overflow-scrolling: touch;
+  }
+  .sh-mobile-group { display: flex; flex-direction: column; }
+
+  /* display:block is what actually fixes the scattered-text bug: these are
+     anchors, so without it they stay inline and 15 of them reflow into one
+     wrapped paragraph instead of a list. */
+  .sh-mobile-link {
+    display: block; text-decoration: none; color: var(--ink, #1a2233);
+    font-size: 15px; font-weight: 600; padding: 12px 4px;
+    border-bottom: 1px solid var(--line, #e3e7ee);
+  }
+
+  .sh-mobile-toggle {
+    display: flex; align-items: center; justify-content: space-between; width: 100%;
+    background: none; border: none; border-bottom: 1px solid var(--line, #e3e7ee);
+    font: inherit; font-size: 15px; font-weight: 600; color: var(--ink, #1a2233);
+    padding: 12px 4px; cursor: pointer; text-align: left;
+  }
+  .sh-mobile-chev { font-size: 11px; opacity: 0.6; transition: transform 0.2s ease; }
+  .sh-mobile-toggle.is-open .sh-mobile-chev { transform: rotate(180deg); }
+
+  /* Indented, rule-marked sub-list so the group's children read as belonging
+     to it rather than as more top-level entries. */
+  .sh-mobile-sub {
+    display: flex; flex-direction: column;
+    margin: 2px 0 6px 4px; padding-left: 12px;
+    border-left: 2px solid var(--line, #e3e7ee);
+  }
+  .sh-mobile-sublink { font-size: 14px; font-weight: 500; padding: 10px 4px; border-bottom: none; }
+
+  .sh-cta-mobile { display: block; text-align: center; margin-top: 14px; padding: 13px 18px; }
+}
+
+/* "warm" theme — matches the Organic design system's cream/terracotta
+   palette used on the city landing pages (app/organic.css .og-page),
+   instead of the homepage's white/navy/amber look. */
+.sh-warm { background: var(--color-bg, #f5ead8); border-bottom-color: var(--color-divider, #e3ddce); }
+.sh-warm .sh-logo { color: var(--color-text, #201e1d); }
+.sh-warm .sh-dot { background: var(--color-accent, #c67139); }
+.sh-warm .sh-nav-link { color: var(--color-text, #201e1d); opacity: 0.75; }
+.sh-warm .sh-nav-link:hover { opacity: 1; }
+.sh-warm .sh-drop-menu { background: var(--color-bg, #f5ead8); border-color: var(--color-divider, #e3ddce); }
+.sh-warm .sh-drop-item { color: var(--color-text, #201e1d); }
+.sh-warm .sh-drop-item:hover { background: var(--color-surface, #ebddc5); }
+.sh-warm .sh-cta { background: var(--color-accent, #c67139); color: var(--color-bg, #f5ead8); }
+.sh-warm .sh-burger { background: var(--color-bg, #f5ead8); border-color: var(--color-divider, #e3ddce); }
+.sh-warm .sh-burger span { background: var(--color-text, #201e1d); }
+.sh-warm .sh-mobile { background: var(--color-bg, #f5ead8); border-top-color: var(--color-divider, #e3ddce); }
+.sh-warm .sh-mobile-link,
+.sh-warm .sh-mobile-toggle { color: var(--color-text, #201e1d); border-bottom-color: var(--color-divider, #e3ddce); }
+.sh-warm .sh-mobile-sublink { border-bottom: none; }
+.sh-warm .sh-mobile-sub { border-left-color: var(--color-divider, #e3ddce); }
+
+/* "navy" theme — the homepage's animated hero design. Starts fully
+   transparent so it overlays the dark hero image beneath it, then fades to
+   solid navy with a shadow once the page scrolls past the hero (JS toggles
+   .sh-navy-scrolled). Not used by "warm" pages, which have no dark hero for
+   a transparent header to sit on top of. */
+.sh-navy {
+  position: sticky; top: 0; background: transparent; border-bottom: none;
+  transition: background 0.25s ease, box-shadow 0.25s ease;
+}
+/* .sh-navy-scrolled is added on scroll AND whenever the mobile sheet is open
+   -- see the note in SiteHeader.js. */
+.sh-navy.sh-navy-scrolled { background: #0b2545; box-shadow: 0 6px 24px rgba(0, 0, 0, 0.28); }
+/* The bar's fill is painted on .sh-inner as well as the header itself. The
+   header-level compound rule above did not reliably win against .sh-navy's
+   transparent background in local testing, and a bar whose white wordmark is
+   invisible over a light page is worse than a redundant declaration. This
+   descendant form is the shape every other .sh-navy rule here uses. */
+.sh-navy .sh-inner-solid { background: #0b2545; }
+.sh-navy .sh-logo { color: #fff; }
+.sh-navy .sh-dot { background: #2f6fed; }
+.sh-navy .sh-nav-link { color: #cbd5e1; }
+.sh-navy .sh-nav-link:hover { color: #fff; }
+.sh-navy .sh-drop-menu { background: #fff; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.2); border: none; }
+.sh-navy .sh-drop-item:hover { background: #f1f5f9; }
+.sh-navy .sh-cta { background: #2f6fed; color: #fff; }
+.sh-navy .sh-cta:hover { filter: brightness(1.1); }
+.sh-navy .sh-burger { background: transparent; border-color: rgba(255, 255, 255, 0.35); }
+.sh-navy .sh-burger span { background: #fff; }
+.sh-navy .sh-mobile { background: #0b2545; border-top-color: rgba(255, 255, 255, 0.15); }
+.sh-navy .sh-mobile-link,
+.sh-navy .sh-mobile-toggle { color: #e2e8f0; border-bottom-color: rgba(255, 255, 255, 0.12); }
+.sh-navy .sh-mobile-sublink { color: #b6c3d9; border-bottom: none; }
+.sh-navy .sh-mobile-sub { border-left-color: rgba(255, 255, 255, 0.18); }
+.sh-navy .sh-mobile-label { color: #94a3b8; }
