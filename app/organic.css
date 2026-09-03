@@ -1,0 +1,248 @@
+/* "Organic" design system for the redesigned city landing pages
+   (app/[service]/[state]/[city]/page.js) and the 3 B2B pages. Ported from
+   the design-system export (styles.css) and scoped under .og-page so it
+   never touches admin/CRM/portal or the homepage/calculator, which keep
+   their existing navy/amber palette in globals.css. Fonts are loaded via
+   next/font/google in the page itself (see FONT_VARS below) rather than
+   this file's original @import, to avoid a render-blocking font fetch. */
+
+.og-page {
+  --color-bg: #f5ead8;
+  --color-surface: #ebddc5;
+  --color-text: #201e1d;
+  --color-accent: #c67139;
+  --color-accent-2: #7a8a5e;
+  --color-divider: color-mix(in srgb, #201e1d 16%, transparent);
+
+  --color-neutral-100: #f9f4ed;
+  --color-neutral-200: #eee7db;
+  --color-neutral-300: #dcd3c4;
+  --color-neutral-400: #c0b6a5;
+  --color-neutral-500: #a19786;
+  --color-neutral-600: #82796a;
+  --color-neutral-700: #645c50;
+  --color-neutral-800: #474238;
+  --color-neutral-900: #2e2b25;
+
+  --color-accent-100: #fff2eb;
+  --color-accent-200: #ffe1d0;
+  --color-accent-300: #ffc6a5;
+  --color-accent-400: #f6a06b;
+  --color-accent-500: #d67f48;
+  --color-accent-600: #b2622d;
+  --color-accent-700: #8c491a;
+  --color-accent-800: #643312;
+  --color-accent-900: #402310;
+
+  --color-accent-2-100: #f0fae1;
+  --color-accent-2-200: #e1eecc;
+  --color-accent-2-300: #ccdbb2;
+  --color-accent-2-400: #aebf92;
+  --color-accent-2-500: #8fa073;
+  --color-accent-2-600: #728157;
+  --color-accent-2-700: #56633f;
+  --color-accent-2-800: #3d472b;
+  --color-accent-2-900: #272e1b;
+
+  --font-heading: var(--og-font-heading), "Caprasimo", system-ui, sans-serif;
+  --font-heading-weight: 400;
+  --font-body: var(--og-font-body), "Figtree", system-ui, sans-serif;
+
+  --space-1: 4.4px;
+  --space-2: 8.8px;
+  --space-3: 13.2px;
+  --space-4: 17.6px;
+  --space-6: 26.4px;
+  --space-8: 35.2px;
+
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 28px;
+
+  --shadow-sm: 0 1px 2px color-mix(in srgb, #2e2b25 14%, transparent);
+  --shadow-md: 0 3px 10px color-mix(in srgb, #2e2b25 16%, transparent);
+  --shadow-lg: 0 12px 32px color-mix(in srgb, #2e2b25 22%, transparent);
+
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.55;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  max-width: none;
+  padding: 0;
+  margin: 0;
+}
+
+.og-page *, .og-page *::before, .og-page *::after { box-sizing: border-box; }
+.og-page h1, .og-page h2, .og-page h3, .og-page h4, .og-page h5, .og-page h6 {
+  font-family: var(--font-heading); font-weight: var(--font-heading-weight);
+  line-height: 1.12; letter-spacing: -0.015em; margin: 0 0 var(--space-2);
+}
+.og-page h1 { font-size: 42px; }
+.og-page h2 { font-size: 32px; }
+.og-page h3 { font-size: 25px; }
+.og-page h4 { font-size: 20px; }
+.og-page h5 { font-size: 16px; }
+.og-page h6 { font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; }
+.og-page p { margin: 0 0 var(--space-3); }
+.og-page a { color: var(--color-accent-700); text-underline-offset: 3px; text-decoration: none; }
+.og-page a:hover { color: var(--color-accent-800); text-decoration: underline; }
+.og-page img { display: block; max-width: 100%; }
+.og-page figure { margin: 0; }
+.og-page figcaption { font-size: 11px; margin-top: var(--space-1); color: color-mix(in srgb, var(--color-text) 55%, transparent); }
+.og-page .text-muted { color: color-mix(in srgb, var(--color-text) 55%, transparent); }
+.og-page :focus { outline: none; }
+.og-page :focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+.og-page ::selection { background: color-mix(in srgb, var(--color-accent) 30%, transparent); }
+.og-page .washed { filter: saturate(0.6) contrast(0.85) brightness(1.1) opacity(0.94); }
+
+.og-page .hr { height: 1px; border: 0; margin: var(--space-4) 0; background: var(--color-divider); }
+
+/* — buttons — */
+.og-page .btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  cursor: pointer; text-decoration: none;
+  font-family: var(--font-heading); font-weight: var(--font-heading-weight);
+  font-size: 13px; line-height: 1.2; color: var(--color-text);
+  background: transparent; border: 1px solid transparent;
+  padding: calc(var(--space-2) * 0.85) var(--space-3);
+  border-radius: var(--radius-md);
+}
+.og-page .btn svg { display: block; }
+.og-page .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.og-page .btn-primary { background: var(--color-accent); color: var(--color-bg); }
+.og-page .btn-primary:hover { background: var(--color-accent-600); }
+.og-page .btn-primary:active { background: var(--color-accent-700); }
+.og-page .btn-secondary { border-color: var(--color-divider); }
+.og-page .btn-secondary:hover { background: color-mix(in srgb, var(--color-text) 7%, transparent); }
+.og-page .btn-secondary:active { background: color-mix(in srgb, var(--color-text) 14%, transparent); }
+.og-page .btn-ghost { color: var(--color-accent); padding-inline: var(--space-1); }
+.og-page .btn-ghost:hover { background: color-mix(in srgb, var(--color-accent) 10%, transparent); }
+.og-page .btn-ghost:active { background: color-mix(in srgb, var(--color-accent) 18%, transparent); }
+.og-page .btn-icon { width: 34px; height: 34px; padding: 0; }
+.og-page .btn-block { width: 100%; margin-top: var(--space-2); }
+
+/* — forms — */
+.og-page .field > label { display: block; font-size: 12px; margin-bottom: 5px; color: color-mix(in srgb, var(--color-text) 70%, transparent); }
+.og-page .input {
+  width: 100%; min-height: 36px; padding: 6px 10px; font: inherit;
+  font-size: 14px; color: var(--color-text); caret-color: var(--color-accent);
+  background: var(--color-surface);
+  border: 1px solid var(--color-divider); border-radius: var(--radius-md);
+}
+.og-page .input:hover { border-color: color-mix(in srgb, var(--color-text) 45%, transparent); }
+.og-page .input:focus-visible { border-color: var(--color-accent); outline-offset: 0; }
+.og-page textarea.input { min-height: 90px; resize: vertical; }
+.og-page .radio { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; }
+.og-page .radio input, .og-page .seg-opt input { position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none; }
+.og-page .radio .dot { width: 16px; height: 16px; flex: none; border-radius: 50%; border: 1.5px solid var(--color-divider); }
+.og-page .radio:hover .dot { border-color: var(--color-accent); }
+.og-page .radio input:checked + .dot { border-color: var(--color-accent); background: var(--color-accent); box-shadow: inset 0 0 0 4px var(--color-bg); }
+.og-page .radio input:focus-visible + .dot { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+.og-page .seg { display: inline-flex; overflow: hidden; border: 1px solid var(--color-divider); border-radius: var(--radius-md); }
+.og-page .seg-opt { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; font-size: 13px; cursor: pointer; }
+.og-page .seg-opt + .seg-opt { border-left: 1px solid var(--color-divider); }
+.og-page .seg-opt:has(input:checked) { background: var(--color-accent); color: var(--color-bg); }
+.og-page .seg-opt:not(:has(input:checked)):hover { background: color-mix(in srgb, var(--color-text) 7%, transparent); }
+.og-page .seg-opt:has(input:focus-visible) { outline: 2px solid var(--color-accent); outline-offset: -2px; }
+
+/* — cards — */
+.og-page .card { display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-3); border-radius: var(--radius-md); background: var(--color-surface); }
+.og-page .card-kicker { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-accent); }
+.og-page .card-title { font-family: var(--font-heading); font-weight: var(--font-heading-weight); font-size: 17px; line-height: 1.2; }
+.og-page .card-body { margin: 0; font-size: 13px; opacity: 0.8; flex: 1; }
+.og-page .card-meta { display: flex; align-items: center; gap: 6px; font-size: 11px; color: color-mix(in srgb, var(--color-text) 50%, transparent); }
+.og-page .elev-sm { box-shadow: var(--shadow-sm); }
+.og-page .elev-md { box-shadow: var(--shadow-md); }
+.og-page .elev-lg { box-shadow: var(--shadow-lg); }
+
+/* — tags — */
+.og-page .tag { display: inline-flex; align-items: center; font-size: 11px; letter-spacing: 0.02em; padding: 3px 10px; border-radius: calc(var(--radius-md) * 0.75); }
+.og-page .tag-accent { background: var(--color-accent-100); color: var(--color-accent-800); }
+.og-page .tag-accent-2 { background: var(--color-accent-2-100); color: var(--color-accent-2-800); }
+.og-page .tag-neutral { background: var(--color-neutral-100); color: var(--color-neutral-800); }
+.og-page .tag-outline { border: 1px solid var(--color-accent); color: var(--color-accent); }
+
+/* — navigation — */
+.og-page .nav { display: flex; align-items: center; gap: var(--space-4); padding: var(--space-3) var(--space-4); border-bottom: none; }
+.og-page .nav-brand { font-family: var(--font-heading); font-weight: var(--font-heading-weight); font-size: 18px; margin-right: auto; }
+.og-page .nav a { color: inherit; text-decoration: none; font-size: 14px; }
+.og-page .nav a:hover, .og-page .nav a[aria-current='page'] { color: var(--color-accent); }
+
+/* — tables — */
+.og-page .table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.og-page .table th { text-align: left; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: color-mix(in srgb, var(--color-text) 60%, transparent); padding: var(--space-2); border-bottom: 1px solid var(--color-divider); }
+.og-page .table td { padding: var(--space-2); border-bottom: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent); }
+.og-page .table tbody tr:hover { background: color-mix(in srgb, var(--color-text) 4%, transparent); }
+
+/* — dialog — */
+.og-page .dialog-backdrop { position: fixed; inset: 0; display: grid; place-items: center; padding: var(--space-4); background: color-mix(in srgb, var(--color-neutral-900) 50%, transparent); }
+.og-page .dialog { width: min(440px, 100%); display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-4); border-radius: var(--radius-lg); background: var(--color-surface); box-shadow: var(--shadow-lg); }
+.og-page .dialog-title { font-family: var(--font-heading); font-weight: var(--font-heading-weight); font-size: 20px; }
+.og-page .dialog-body { font-size: 14px; opacity: 0.85; }
+.og-page .dialog-actions { display: flex; justify-content: flex-end; gap: var(--space-2); margin-top: var(--space-2); }
+
+/* — rounded frame: everything softens, small controls go pill — */
+.og-page .card, .og-page .dialog { border-radius: calc(var(--radius-lg) * 1.15); }
+.og-page .btn, .og-page .tag, .og-page .seg, .og-page .input { border-radius: 999px; }
+.og-page .input { padding-inline: 14px; }
+
+/* ══════ page-level layout helpers (not part of the exported system) ══════ */
+.og-page .og-wrap { max-width: 1180px; margin: 0 auto; padding: clamp(40px,6vw,72px) clamp(16px,4vw,40px); }
+.og-page .og-surface { background: var(--color-surface); }
+.og-page .og-grid-auto { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 18px; }
+.og-page .og-hint { font-size: 12.5px; margin-top: -6px; }
+.og-page .og-hint.ok { color: var(--color-accent-2-700); font-weight: 600; }
+.og-page .og-hint.warn { color: var(--color-accent-700); }
+.og-page details > summary { list-style: none; cursor: pointer; }
+.og-page details > summary::-webkit-details-marker { display: none; }
+/* Hero is a full-bleed block with the carrier photo as a faint background
+   layer (mirrors the home page's .ha-hero). The quote form is rendered in its
+   own card BELOW the hero, so the hero itself is a single block — no grid. */
+.og-page .og-hero { display: block; position: relative; overflow: hidden; }
+/* Carrier photo as a faint, full-bleed background layer behind the hero
+   (mirrors the home page's .ha-hero-bg). The hero section carries its own
+   dark gradient + this overlay so the beige on-page text stays readable
+   over the image. */
+.og-page .og-hero-bg {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: cover; opacity: 0.28; z-index: 0; pointer-events: none;
+}
+.og-page .og-hero-overlay {
+  position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background: linear-gradient(180deg, rgba(20, 18, 16, 0.55) 0%, rgba(20, 18, 16, 0.35) 100%);
+}
+.og-page .og-2col { display: grid; grid-template-columns: 1fr 1fr; }
+.og-page .og-mobile-cta { display: none; }
+/* Hero + quote: headline on the left, city-themed quote card ON the photo on
+   the right. Stacks to one column on mobile so the form drops below the copy. */
+.og-page .og-hero-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(340px, 460px); gap: clamp(24px, 4vw, 56px); align-items: end; }
+/* 3-column form rows (name/phone/email, pickup/drop-off/date) — matches the
+   home-page quote-form cadence but stays in the city "Organic" theme. */
+.og-page .og-row-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+@media (max-width: 600px) { .og-page .og-row-3 { grid-template-columns: 1fr; } }
+@media (max-width: 880px) { .og-page .og-hero-grid { grid-template-columns: 1fr; gap: 24px; } }
+
+@media (max-width: 880px) {
+  .og-page .og-2col { grid-template-columns: 1fr; }
+  .og-page .og-mobile-cta { display: block; }
+  .og-page { padding-bottom: 72px; }
+}
+
+/* ══════ state tile-grid map (components/USStateMap.js) ══════ */
+.og-page .og-map { display: grid; gap: 5px; aspect-ratio: 13 / 8; max-width: 780px; margin: 0 auto; }
+.og-page .og-map-tile {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: var(--color-surface); border: 1px solid var(--color-divider); border-radius: 6px;
+  color: var(--color-text); text-decoration: none; font-family: var(--font-heading);
+  transition: background 0.14s, transform 0.14s;
+}
+.og-page .og-map-tile:hover { background: var(--color-accent); color: var(--color-bg); text-decoration: none; transform: translateY(-1px); }
+.og-page .og-map-abbr { font-size: clamp(10px, 1.6vw, 14px); letter-spacing: 0.02em; }
+.og-page .og-map-count { font-family: var(--font-body); font-size: clamp(7px, 1vw, 9px); opacity: 0.65; }
+@media (max-width: 640px) {
+  .og-page .og-map { aspect-ratio: 13 / 10; }
+  .og-page .og-map-count { display: none; }
+}
