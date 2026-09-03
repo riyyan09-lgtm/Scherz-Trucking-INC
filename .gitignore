@@ -9,3 +9,4 @@ scripts/.env.reset
 .env.vercel*
 .env.*
 test_classic_token.txt
+.vercel/access_token
