@@ -10,9 +10,11 @@ scripts/.env.reset
 test_classic_token.txt
 
 # Vercel config (project.json tracked, access_token ignored)
-.vercel/
 !.vercel/project.json
 !.vercel/README.txt
+
+.vercel
+.env*
 
 .vercel
 .env*
