@@ -1,0 +1,100 @@
+.bk {
+  --navy: #0b1f3a; --amber: #ffb627; --teal: #1f8a82; --ink: #1a2233;
+  --muted: #5b6472; --line: #e3e7ee; --soft: #f4f7fb;
+  min-height: 100vh; background: var(--soft); color: var(--ink);
+  -webkit-font-smoothing: antialiased; padding-bottom: 48px;
+}
+.bk-head {
+  background: var(--navy); color: #fff; padding: 16px 24px;
+  display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;
+}
+.bk-logo { display: flex; align-items: center; gap: 9px; font-weight: 800; font-size: 18px; }
+.bk-logo .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--amber); }
+.bk-secure { font-size: 12px; color: rgba(255,255,255,0.7); }
+
+.bk-card {
+  background: #fff; border: 1px solid var(--line); border-radius: 16px;
+  max-width: 620px; margin: 32px auto 0; padding: 32px 30px;
+  box-shadow: 0 18px 50px rgba(11,31,58,0.08);
+}
+.bk-card h1 { font-size: 26px; color: var(--navy); letter-spacing: -0.02em; }
+.bk-sub { color: var(--muted); font-size: 15px; margin-top: 6px; }
+
+.bk-summary { background: var(--soft); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; margin: 22px 0; display: grid; gap: 10px; }
+.bk-summary > div { display: flex; justify-content: space-between; gap: 14px; font-size: 14px; }
+.bk-summary span { color: var(--muted); }
+.bk-summary b { color: var(--ink); text-align: right; }
+.bk-price { color: var(--teal) !important; font-size: 16px; }
+
+.bk-label { display: block; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 16px 0 7px; }
+.bk textarea, .bk-sign {
+  width: 100%; border: 1.5px solid var(--line); border-radius: 9px; padding: 12px 13px;
+  font-size: 15px; font-family: inherit; color: var(--ink); outline: none; resize: vertical;
+}
+.bk textarea:focus, .bk-sign:focus { border-color: var(--navy); }
+.bk-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.bk-2col .bk-label { margin-top: 12px; }
+@media (max-width: 520px) { .bk-2col { grid-template-columns: 1fr; } }
+
+.bk-agreement { background: #fff8ec; border: 1px solid #f1dcae; border-radius: 12px; padding: 16px 18px; margin: 22px 0 4px; }
+.bk-agreement b { color: #8a5a05; font-size: 14px; }
+.bk-agreement p { color: #5c4a22; font-size: 13px; margin-top: 8px; line-height: 1.6; }
+
+.bk-signature {
+  margin-top: 10px; padding: 12px 16px; border: 1px dashed var(--line); border-radius: 9px;
+  font-family: "Segoe Script", "Brush Script MT", cursive; font-size: 26px; color: var(--navy);
+}
+.bk-check-row { display: flex; align-items: flex-start; gap: 10px; font-size: 14px; color: var(--ink); margin: 18px 0; cursor: pointer; }
+.bk-check-row input { width: 17px; height: 17px; margin-top: 2px; accent-color: var(--teal); flex-shrink: 0; }
+
+.bk button {
+  width: 100%; background: var(--amber); color: var(--navy); border: none; padding: 15px;
+  border-radius: 10px; font-weight: 800; font-size: 16px; cursor: pointer; letter-spacing: -0.01em;
+}
+.bk button:hover { filter: brightness(1.05); }
+.bk button:disabled { opacity: 0.6; cursor: default; }
+.bk-fine { font-size: 12px; color: var(--muted); text-align: center; margin-top: 12px; }
+.bk-err { color: #b23a3a; font-size: 13.5px; font-weight: 600; margin-top: 12px; }
+
+.bk-done { text-align: center; }
+.bk-check {
+  width: 60px; height: 60px; border-radius: 50%; background: var(--teal); color: #fff;
+  font-size: 30px; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;
+}
+.bk-done p { color: var(--muted); font-size: 15px; margin-top: 8px; }
+
+@media (max-width: 620px) { .bk-card { margin: 20px 14px 0; padding: 24px 20px; border-radius: 12px; } }
+.bk-doc-link { display: inline-block; margin-top: 18px; color: var(--navy); font-weight: 700; font-size: 14px; text-decoration: underline; }
+.bk-change { background: #fff4e0; border: 1px solid #f1c570; color: #8a5a05; border-radius: 10px; padding: 12px 14px; font-size: 13.5px; font-weight: 600; margin-bottom: 18px; }
+
+/* Wizard steps */
+.bk-steps { display: flex; gap: 8px; margin: 4px 0 22px; }
+.bk-step { flex: 1; display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted); border-top: 3px solid var(--line); padding-top: 10px; }
+.bk-step-num { width: 22px; height: 22px; border-radius: 50%; background: var(--line); color: var(--muted); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 12px; flex-shrink: 0; }
+.bk-step.active { color: var(--navy); border-top-color: var(--navy); font-weight: 700; }
+.bk-step.active .bk-step-num { background: var(--navy); color: #fff; }
+.bk-step.done { border-top-color: var(--teal); color: var(--teal); }
+.bk-step.done .bk-step-num { background: var(--teal); color: #fff; }
+.bk-step-lbl { white-space: nowrap; }
+@media (max-width: 520px) { .bk-step-lbl { display: none; } }
+
+/* Wizard nav (two buttons side by side) */
+.bk-nav { display: flex; gap: 12px; margin-top: 22px; align-items: center; }
+.bk-nav > span { flex: 1; }
+.bk-nav button { flex: 1; }
+.bk-nav .bk-ghost { background: #fff; color: var(--navy); border: 1.5px solid var(--line); }
+.bk-nav .bk-ghost:hover { border-color: var(--navy); filter: none; }
+
+/* Full agreement to review */
+.bk-contract { background: var(--soft); border: 1px solid var(--line); border-radius: 12px; padding: 20px 22px; margin: 18px 0 4px; max-height: 46vh; overflow-y: auto; }
+.bk-contract h2 { font-size: 17px; color: var(--navy); margin-bottom: 10px; }
+.bk-contract h3 { font-size: 14px; color: var(--navy); margin: 16px 0 6px; }
+.bk-contract p { font-size: 13.5px; color: var(--ink); line-height: 1.6; }
+.bk-contract ul { margin: 6px 0 0 18px; }
+.bk-contract li { font-size: 13.5px; color: var(--ink); line-height: 1.7; }
+.bk-veh-rows { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; }
+.bk-veh-rows > span { color: var(--muted); font-size: 12.5px; margin-right: 4px; }
+.bk-veh-rows > b { font-size: 14px; color: var(--ink); font-weight: 600; }
+.bk-terms { margin: 6px 0 0 18px; padding: 0; }
+.bk-terms li { font-size: 13px; color: var(--ink); line-height: 1.65; margin-bottom: 10px; padding-left: 4px; }
+.bk-terms li b { color: var(--navy); }
