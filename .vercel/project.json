@@ -1,1 +1,16 @@
-{"projectId":"prj_lyA1scBgbArHAMaio8ePPHFhy88z","orgId":"team_sOEaSzhq94Inyk5QnmefW9Yj","projectName":"scherz-trucking-inc"}
+{
+  "projectId": "prj_lyA1scBgbArHAMaio8ePPHFhy88z",
+  "orgId": "team_sOEaSzhq94Inyk5QnmefW9Yj",
+  "projectName": "scherz-trucking-inc",
+  "settings": {
+    "createdAt": 1788445602084,
+    "framework": null,
+    "devCommand": null,
+    "installCommand": null,
+    "buildCommand": null,
+    "outputDirectory": null,
+    "rootDirectory": null,
+    "directoryListing": false,
+    "nodeVersion": "24.x"
+  }
+}
