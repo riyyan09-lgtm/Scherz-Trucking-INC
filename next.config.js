@@ -1,5 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // output: 'export', // disabled - static export fails on API routes
+  outputDirectory: 'public',
   // Static generation of the 500+ landing pages is memory-heavy. Cap the
   // worker pool so peak RSS stays low on constrained build hosts (and local
   // dev machines with little free RAM). Vercel has ample memory, but this is
