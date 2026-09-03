@@ -6,10 +6,6 @@ scripts/.env.reset
 .env.local
 .env.example
 .env.prod_*
+.env.vercel*
 .env.*
 test_classic_token.txt
-
-.env*
-
-.vercel
-.env*
