@@ -79,16 +79,6 @@ const nextConfig = {
         destination: "https://scherztruckinginc.com/:path",
         permanent: true,
       },
-      // Collapse the http(s)://www.scherztruckinginc.com -> https://scherztruckinginc.com
-      // hop into a single 308 (otherwise http www becomes a 2-hop chain:
-      // http www -> https www -> https non-www, which GSC flags as a
-      // multi-hop redirect). Catches both schemes via the host matcher.
-      {
-        source: "/:path((?!api).*)",
-        has: [{ type: "host", value: "www.scherztruckinginc.com" }],
-        destination: "https://scherztruckinginc.com/:path",
-        permanent: true,
-      },
     ];
   },
 };
