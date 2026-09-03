@@ -1,0 +1,11 @@
+node_modules/
+.next/
+.env.local
+.DS_Store
+
+.vercel
+.env*
+qrcheck.svg
+
+# local admin-reset secrets (never commit)
+scripts/.env.reset
