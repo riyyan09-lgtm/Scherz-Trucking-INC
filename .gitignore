@@ -10,3 +10,6 @@ scripts/.env.reset
 test_classic_token.txt
 
 .env*
+
+.vercel
+.env*
