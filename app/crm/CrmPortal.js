@@ -144,7 +144,12 @@ function BizInquiriesView({ api }) {
     try { setItems((await api("/api/crm/business-inquiries")).inquiries); setError(null); }
     catch (e) { setError(e.message); }
   }
-  useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  // Auth check runs on mount: if a valid Supabase session exists it logs the
+  // agent in automatically (loads data + activity); otherwise the login form
+  // stays. tryLogin() also calls load() after a successful password sign-in.
+  // NO separate load() useEffect — the auth check above owns that flow, and a
+  // bare load() without a session would throw an unhandled rejection that hits
+  // the error boundary ({"authorization": "Bearer null"} → 401).
   async function setStatus(id, status) {
     setBusy(id);
     try {
@@ -227,7 +232,7 @@ export default function CrmPortal() {
   const [staySignedIn, setStaySignedIn] = useState(true);
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
-  const [checkingSession, setCheckingSession] = useState(true);
+  const [checkingSession, setCheckingSession] = useState(false);
   const [data, setData] = useState(null);
   const [openId, setOpenId] = useState(null);
   const [draft, setDraft] = useState({});
@@ -280,16 +285,17 @@ export default function CrmPortal() {
   const [bookingEvents, setBookingEvents] = useState([]);
   const [vinInput, setVinInput] = useState("");
   const [editingTask, setEditingTask] = useState(null);
-  const [noteKind, setNoteKind] = useState("internal");
-
-  // Redesign: collapsible card state (unconditional — before any early return)
-  const [collapsed, setCollapsed] = useState({});
-  // Simplified-layout edit modals
-  const [modal, setModal] = useState(null); // 'shipment' | 'origin' | 'destination' | 'customer' | 'campaign'
   const [editingVeh, setEditingVeh] = useState(null); // vehicle id for vehicle edit modal
   const [vehDraft, setVehDraft] = useState(null); // local edits, not sent until Save
   const [vehSaving, setVehSaving] = useState(false);
   const [vehMsg, setVehMsg] = useState(null);
+  const [vinModal, setVinModal] = useState(false); // VIN lookup / add vehicle modal
+  const [noteKind, setNoteKind] = useState("internal");
+  // Track previous pricing values for change-order detection
+  const _prevTariff = useRef(null);
+  const _prevCarrier = useRef(null);
+  const _prevOriginState = useRef(null);
+  const _prevDestState = useRef(null);
   const openModal = (m) => setModal(m);
   const closeModal = () => setModal(null);
   // Payments feature state (tab + Add/Edit Payment modal)
@@ -315,6 +321,15 @@ export default function CrmPortal() {
   const [invoiceError, setInvoiceError] = useState(null);
   const [pdfInvoiceUrl, setPdfInvoiceUrl] = useState(null); // object URL for the generated invoice PDF
   const [invoiceHistory, setInvoiceHistory] = useState([]); // past generated invoices for the open order
+  // Import leads modal
+  const [importOpen, setImportOpen] = useState(false);
+  const [importText, setImportText] = useState("");
+  const [importFile, setImportFile] = useState(null);
+  const [importDone, setImportDone] = useState(null);
+  const [importFileName, setImportFileName] = useState("");
+  // Change Order popup — shown when a change requires client approval (price change, route change, vehicle change, status change)
+  const [changeOrderOpen, setChangeOrderOpen] = useState(false);
+  const [changeOrderReason, setChangeOrderReason] = useState("");
   const [composer, setComposer] = useState(null); // staged rendered message for Apply
   // Action-bar Delete button: two-click confirm. First click arms (red,
   // "Click Again to Delete"); a second click within 5s deletes; otherwise it
@@ -325,11 +340,21 @@ export default function CrmPortal() {
     if (delArmed) {
       if (delTimer.current) clearTimeout(delTimer.current);
       setDelArmed(false);
-      saveGuarded({ status: "dead" }, "Dead.");
+      deleteLead();
     } else {
       setDelArmed(true);
       delTimer.current = setTimeout(() => setDelArmed(false), 5000);
     }
+  }
+  async function deleteLead() {
+    if (!openId) return;
+    try {
+      const r = await api("/api/crm/leads?id=" + openId, { method: "DELETE" });
+      if (r?.error) throw new Error(r.error);
+      setOpenId(null);
+      setMsg({ ok: true, text: "Lead deleted." });
+      await load();
+    } catch (e) { setMsg({ ok: false, text: e.message }); }
   }
   // Modal keyboard shortcuts: Enter = Save, Esc = Close (skip Enter inside textarea/select)
   useEffect(() => {
@@ -350,9 +375,12 @@ export default function CrmPortal() {
 
   async function api(path, options = {}) {
     const token = await getFreshToken("crm");
+    const method = options.method || "GET";
+    const body = options.body;
     const res = await fetch(path, {
-      ...options,
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, ...(options.headers || {}) },
+      method,
+      ...(body && { body: typeof body === "string" ? body : JSON.stringify(body) }),
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + token, ...(options.headers || {}) },
       cache: "no-store",
     });
     const out = await res.json().catch(() => ({}));
@@ -594,7 +622,7 @@ export default function CrmPortal() {
     }
   }
   async function saveVehicle(v) { await api("/api/crm/vehicles", { method: "PATCH", body: JSON.stringify(v) }); loadVehicles(openId); }
-  function closeVehModal() { setEditingVeh(null); setVehDraft(null); setVehMsg(null); }
+  function closeVehModal() { setEditingVeh(null); setVehDraft(null); setVehMsg(null); setVinModal(false); }
   async function saveVehDraft() {
     if (!vehDraft) return;
     setVehSaving(true);
@@ -602,6 +630,9 @@ export default function CrmPortal() {
     try {
       await saveVehicle(vehDraft);
       setVehMsg({ ok: true, text: "Saved." });
+      // Vehicle saved — show Change Order for client approval
+      setChangeOrderOpen(true);
+      setChangeOrderReason("Vehicle added/modified.");
     } catch (e) {
       setVehMsg({ ok: false, text: e.message || "Save failed." });
     } finally {
@@ -996,8 +1027,14 @@ export default function CrmPortal() {
         email: draft.email != null ? String(draft.email).trim() : draft.email,
         phone: draft.phone != null ? String(draft.phone).trim() : draft.phone,
         alt_phone: draft.alt_phone != null ? String(draft.alt_phone).trim() : draft.alt_phone,
+        payment_method: draft.payment_method != null ? String(draft.payment_method).trim() : draft.payment_method,
       };
-      const out = await api("/api/crm/leads", { method: "PATCH", body: JSON.stringify({ id: openId, ...clean, ...extra }) });
+      // Send only the explicitly-changed fields (extra) plus id — never the full
+      // draft. Sending every draft field (including stale source-only fields)
+      // can trip PGRST204 on columns that don't exist on this project's leads
+      // table (e.g. order_number, converted_at) and would block status-only
+      // updates like the My Orders status dropdown.
+      const out = await api("/api/crm/leads", { method: "PATCH", body: JSON.stringify({ id: openId, ...extra }) });
       await load();
       // Create the broker-fee draft ONCE, only when converting a quote to an
       // order — never on a plain save, and never on page open (openLead no
@@ -1007,7 +1044,17 @@ export default function CrmPortal() {
       if (out.quote_email === "sent") text = "Quote emailed to the customer.";
       if (out.quote_email === "no_customer_email") text = "No customer email on file — quote not emailed.";
       if (out.quote_email === "failed") text = "Saved — quote email could not be delivered (sending domain not verified yet).";
+      // If status changed to "booked" (agreement signed), show Change Order for client
+      if (extra.status === "booked" && draft.status !== "booked") {
+        setChangeOrderOpen(true);
+        setChangeOrderReason("Agreement signed — shipment confirmed.");
+      }
       setMsg({ ok: true, text });
+      // If status changed to "booked" (agreement signed), show Change Order for client approval
+      if (extra.status === "booked" && draft.status !== "booked") {
+        setChangeOrderOpen(true);
+        setChangeOrderReason("Agreement signed — shipment confirmed.");
+      }
     } catch (e) { setMsg({ ok: false, text: e.message }); } finally { setBusy(false); }
   }
   async function dispatchAction(action, extra = {}) {
@@ -1053,7 +1100,7 @@ export default function CrmPortal() {
     );
   }
 
-  const leads = data.leads || [];
+  const leads = data?.leads || [];
   const open = openId ? leads.find((l) => l.id === openId) : null;
   const brokerFee = draft.total_tariff !== "" && draft.carrier_pay !== "" && draft.total_tariff != null && draft.carrier_pay != null
     ? Number(draft.total_tariff) - Number(draft.carrier_pay) : null;
@@ -1156,8 +1203,8 @@ export default function CrmPortal() {
       // pay) on this year's orders — NOT the gross shipment amount, which is
       // mostly the carrier's money and isn't the broker's revenue.
       { label: "Revenue", value: (() => { const yr = new Date().getFullYear(); const o = leads.filter((l) => bucketOf(l) === "orders" && new Date(l.closed_at || l.created_at).getFullYear() === yr); const earned = o.reduce((s, l) => s + Math.max(0, (Number(l.total_tariff) || 0) - (Number(l.carrier_pay) || 0)), 0); return earned ? "$" + earned.toLocaleString() : "—"; })(), sub: new Date().getFullYear() + " broker earnings", color: "var(--svc-move)" },
-      { label: "Closed", value: leads.filter((l) => l.status === "closed").length, sub: "delivered", color: "var(--svc-freight)" },
-      { label: "Active", value: leads.filter((l) => l.status === "booked").length, sub: "in transit", color: "var(--svc-boat)" },
+      { label: "Closed", value: leads.filter((l) => (l.status === "closed" || l.status === "booked") && l.secondary_status === "Delivered").length, sub: "delivered", color: "var(--svc-freight)" },
+      { label: "Active", value: leads.filter((l) => l.status === "booked" && l.secondary_status !== "Delivered").length, sub: "in transit", color: "var(--svc-boat)" },
       { label: "Broker Earnings", value: (() => { const o = leads.filter((l) => bucketOf(l) === "orders"); const earned = o.reduce((s, l) => s + Math.max(0, (Number(l.total_tariff) || 0) - (Number(l.carrier_pay) || 0)), 0); return earned ? "$" + earned.toLocaleString() : "—"; })(), sub: (() => { const o = leads.filter((l) => bucketOf(l) === "orders"); const earned = o.reduce((s, l) => s + Math.max(0, (Number(l.total_tariff) || 0) - (Number(l.carrier_pay) || 0)), 0); const collected = o.reduce((s, l) => s + (Number(l.broker_collected) || 0), 0); const due = Math.max(0, earned - collected); return "collected $" + collected.toLocaleString() + " · due $" + due.toLocaleString(); })(), color: "var(--svc-move)" },
       { label: "Refunds / Chargebacks", value: (() => { const o = leads.filter((l) => bucketOf(l) === "orders"); const ref = o.reduce((s, l) => s + (Number(l.broker_refunded) || 0), 0) + o.reduce((s, l) => s + (Number(l.broker_chargebacks) || 0), 0); return ref ? "$" + ref.toLocaleString() : "—"; })(), sub: (() => { const o = leads.filter((l) => bucketOf(l) === "orders"); const cb = o.filter((l) => (Number(l.broker_refunded) || 0) + (Number(l.broker_chargebacks) || 0) > 0).length; return cb ? cb + " reversed" : "none reversed"; })(), color: "var(--svc-freight)" },
       { label: "Broker Refunds (This Month)", value: refundsMonth.refunded ? "$" + Number(refundsMonth.refunded).toLocaleString() : "—", sub: refundsMonth.refunded_count ? refundsMonth.refunded_count + " refund" + (refundsMonth.refunded_count === 1 ? "" : "s") : "none this month", color: "var(--svc-move)" },
@@ -1195,17 +1242,27 @@ export default function CrmPortal() {
     else { setSortKey(key); setSortDir("asc"); }
   }
   function exportCsv() {
-    const cols = ["id", "created_at", "name", "phone", "email", "origin_city", "origin_state", "origin_zip",
-      "destination_city", "destination_state", "destination_zip", "pickup_date", "total_tariff", "carrier_pay", "status"];
-    const esc = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
-    const rows = [cols.join(",")].concat(sorted.map((l) => cols.map((c) => esc(l[c])).join(",")));
-    const blob = new Blob([rows.join("\n")], { type: "text/csv" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `${section}-${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(a.href);
+    // Export CSV removed — replaced by Import Leads button per user request.
   }
+  async function doImport() {
+    setImportDone("loading");
+    try {
+      let body;
+      if (importFile) {
+        body = { filename: importFileName, file_base64: importFile.split(",")[1] };
+      } else {
+        body = { text: importText };
+      }
+      const r = await api("/api/crm/import", { method: "POST", body: JSON.stringify(body) });
+      if (r.error) throw new Error(r.error);
+      setImportDone(r);
+      if (r.inserted > 0) {
+        setMsg({ ok: true, text: `Imported ${r.inserted} lead${r.inserted===1?'':'s'}. ${r.skipped>0?`${r.skipped} skipped.`:''}` });
+      }
+      await load();
+    } catch (e) { setMsg({ ok: false, text: e.message }); setImportDone(null); }
+  }
+  function clearImport() { setImportText(""); setImportFile(null); setImportDone(null); setImportFileName(""); }
   const SortTh = ({ k, children }) => (
     <th className="crm-sortable" onClick={() => sortBy(k)}>
       {children}{sortKey === k ? (sortDir === "asc" ? " ▲" : " ▼") : ""}
@@ -1296,7 +1353,7 @@ return (
               </div>
             )}
           </div>
-          <span className="crm-side-label crm-side-user">{data.agent.name} · {data.agent.company}</span>
+          <span className="crm-side-label crm-side-user">{data?.agent?.name} · {data?.agent?.company}</span>
           <button className="crm-side-signout" onClick={signOut}>Sign out</button>
         </div>
       </aside>
@@ -1325,7 +1382,7 @@ return (
               <option value="">All statuses</option>
               {statusesInBucket.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
-            <button className="crm-refresh" style={{ width: "auto", padding: "0 12px", borderRadius: 6 }} onClick={exportCsv}>Export CSV</button>
+            <button className="crm-ico-btn" style={{ background: "var(--amber)", color: "var(--navy)", border: "none", padding: "8px 14px", borderRadius: 8, fontWeight: 700, fontSize: 13 }} title="Import leads" onClick={() => setImportOpen(true)}>📥 Import</button>
           </div>
           <div className="crm-table-wrap">
             <table className="crm-table">
@@ -1406,7 +1463,7 @@ return (
                     {rFiltered.map((p) => (
                       <tr key={p.id} className="crm-row" onClick={() => p.lead_id && openLead({ id: p.lead_id })}>
                         <td className="crm-strong">{p.customer || "—"}</td>
-                        <td className="mono">{p.order_number || "—"}</td>
+                        <td className="mono">{p.name || "—"}</td>
                         <td>
                           <span className={"crm-pill " + ((p.refund_type || "refund") === "chargeback" ? "s-closed cb-type" : "s-booked rf-type")}>
                             {p.refund_type === "chargeback" ? "⚡ Chargeback" : "↩ Refund"}
@@ -1498,7 +1555,7 @@ return (
                   </div>
                   <div><span>Ship Date</span><span>{draft.pickup_date ? String(draft.pickup_date).slice(0,10) : "—"}</span></div>
                   <div><span>Created</span><span>{dt(open.created_at)}</span></div>
-                  <div><span>Assigned To</span><span>{data.agent.name}</span></div>
+                  <div><span>Assigned To</span><span>{data?.agent?.name}</span></div>
                   {(() => {
                     const url = open.booking_token ? `${data.site}/book/${open.booking_token}` : null;
                     const short = url ? url.replace(/^https?:\/\//, "") : null;
@@ -1624,7 +1681,32 @@ return (
                   <div className="crm-qp" style={{ marginBottom: 6 }}>
                     <input className="crm-input" placeholder="VIN to decode…" value={vinInput} onChange={(e) => setVinInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && decodeVin()} />
                     <button className="crm-chip" onClick={decodeVin}>Import VIN</button>
-                    <button className="crm-chip" onClick={() => api("/api/crm/vehicles", { method: "POST", body: JSON.stringify({ lead_id: openId }) }).then(() => loadVehicles(openId))}>+ Add Vehicle</button>
+                    <button className="crm-chip" onClick={() => { setVehDraft({ lead_id: openId, year: 0, make: "", model: "" }); setVinModal(true); }}>+ Add Vehicle</button>
+                    {vinModal && vehDraft && (
+                      <div className="crm-modal-overlay" onClick={() => setVinModal(false)}>
+                        <div className="crm-modal" onClick={(e) => e.stopPropagation()}>
+                          <div className="crm-modal-h">Add Vehicle</div>
+                          <div className="crm-veh-body">
+                            <div className="crm-qp">
+                              <label>Year</label>
+                              <input className="crm-input" type="number" value={vehDraft.year || ""} onChange={(e) => setVehDraft({ ...vehDraft, year: Number(e.target.value) || null })} />
+                            </div>
+                            <div className="crm-qp">
+                              <label>Make</label>
+                              <input className="crm-input" value={vehDraft.make || ""} onChange={(e) => setVehDraft({ ...vehDraft, make: e.target.value })} />
+                            </div>
+                            <div className="crm-qp">
+                              <label>Model</label>
+                              <input className="crm-input" value={vehDraft.model || ""} onChange={(e) => setVehDraft({ ...vehDraft, model: e.target.value })} />
+                            </div>
+                          </div>
+                          <div className="crm-modal-foot">
+                            <button className="crm-chip" onClick={() => setVinModal(false)}>Cancel</button>
+                            <button className="crm-ab primary" onClick={() => { setVinModal(false); saveVehDraft(); }}>Save Vehicle</button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                   {vehicles.length === 0 && <div className="crm-muted">No vehicles.</div>}
                   {[...vehicles].sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0)).map((v, i) => {
@@ -1820,13 +1902,12 @@ return (
               {msg ? msg.text : <span className="crm-context">{contextStatus}</span>}
             </div>
             {!isOrder && <button className="crm-ab" disabled={busy} onClick={() => saveGuarded({}, "Saved.")}>Save</button>}
-            {!isOrder && open.status !== "quoted" && open.status !== "booked" && <button className="crm-ab primary" disabled={busy} onClick={() => saveGuarded({ status: "quoted" }, "Quote saved.")}>Save &amp; Quote</button>}
+            {!isOrder && open.status !== "quoted" && open.status !== "booked" && open.status !== "hot" && <button className="crm-ab primary" disabled={busy} onClick={() => saveGuarded({ status: "quoted" }, "Quote saved.")}>Save &amp; Quote</button>}
             {!isOrder && open.status === "quoted" && <button className="crm-ab book" disabled={busy} onClick={() => saveGuarded({ status: "booked" }, "Converted.")}>Convert to Order</button>}
             {isOrder && <button className="crm-ab" disabled={busy} onClick={() => saveGuarded({}, "Saved.")}>Save</button>}
             <button className="crm-ab" disabled={busy} onClick={() => { const p = (draft.phone || "").replace(/[^\d+]/g, ""); if (p) { window.location.href = "tel:" + p; logActivity("call", openId); } }}>📞 Call</button>
             <button className="crm-ab" disabled={busy} onClick={() => { openTextModal(); logActivity("text", openId); }}>💬 Text</button>
-            {isOrder && <button className="crm-ab" disabled={busy} onClick={() => setPaymentModal(true)}>Payments</button>}
-            {isOrder && <button className="crm-ab" disabled={busy} onClick={() => { setTab("payments"); openAddPayment(); }}>Add Payment</button>}
+            {(!isOrder || open.status === "booked" || open.status === "closed") && <button className="crm-ab" disabled={busy} onClick={() => { setTab("payments"); openAddPayment(); }}>Add Payment</button>}
             {open.booking_token && <button className="crm-ab" disabled={busy} onClick={() => { window.open(data.site + "/agreement/" + open.booking_token, "_blank"); setMsg({ ok: true, text: "Agreement generated." }); }}>Generate Agreement</button>}
             <button className="crm-ab" disabled={busy || invoiceLoading} onClick={openInvoiceFlow}>{invoiceLoading ? "Loading…" : "🧾 Invoice"}</button>
             <button className={"crm-ab del" + (delArmed ? " armed" : "")} disabled={busy} onClick={armDelete}>{delArmed ? "Click Again to Delete" : "Delete"}</button>
@@ -1903,7 +1984,21 @@ return (
                 <label className="crm-chk"><input type="checkbox" checked={!!draft.liftgate} onChange={setCheck("liftgate")} /> Liftgate</label>
                 <div className="crm-modal-foot">
                   <button className="crm-chip" onClick={closeModal}>Cancel</button>
-                  <button className="crm-ab primary" onClick={() => { saveGuarded({}, "Saved."); closeModal(); }}>Save</button>
+                  <button className="crm-ab primary" onClick={() => {
+                    saveGuarded({}, "Saved.");
+                    closeModal();
+                    // If route changed, show Change Order
+                    if (_prevOriginState.current != null && _prevOriginState.current !== draft.origin_state) {
+                      setChangeOrderOpen(true);
+                      setChangeOrderReason("Pickup location / route changed.");
+                    }
+                    if (_prevDestState.current != null && _prevDestState.current !== draft.destination_state) {
+                      setChangeOrderOpen(true);
+                      setChangeOrderReason("Delivery location / route changed.");
+                    }
+                    _prevOriginState.current = draft.origin_state;
+                    _prevDestState.current = draft.destination_state;
+                  }}>Save</button>
                 </div>
               </>
             )}
@@ -1929,7 +2024,21 @@ return (
                 <label className="crm-chk"><input type="checkbox" checked={!!draft.auction} onChange={setCheck("auction")} /> Auction</label>
                 <div className="crm-modal-foot">
                   <button className="crm-chip" onClick={closeModal}>Cancel</button>
-                  <button className="crm-ab primary" onClick={() => { saveGuarded({}, "Saved."); closeModal(); }}>Save</button>
+                  <button className="crm-ab primary" onClick={() => {
+                    saveGuarded({}, "Saved.");
+                    closeModal();
+                    // If route changed, show Change Order
+                    if (_prevOriginState.current != null && _prevOriginState.current !== draft.origin_state) {
+                      setChangeOrderOpen(true);
+                      setChangeOrderReason("Pickup location / route changed.");
+                    }
+                    if (_prevDestState.current != null && _prevDestState.current !== draft.destination_state) {
+                      setChangeOrderOpen(true);
+                      setChangeOrderReason("Delivery location / route changed.");
+                    }
+                    _prevOriginState.current = draft.origin_state;
+                    _prevDestState.current = draft.destination_state;
+                  }}>Save</button>
                 </div>
               </>
             )}
@@ -1948,7 +2057,21 @@ return (
                 </F2>
                 <div className="crm-modal-foot">
                   <button className="crm-chip" onClick={closeModal}>Cancel</button>
-                  <button className="crm-ab primary" onClick={() => { saveGuarded({}, "Saved."); closeModal(); }}>Save</button>
+                  <button className="crm-ab primary" onClick={() => {
+                    saveGuarded({}, "Saved.");
+                    closeModal();
+                    // Route change triggers Change Order
+                    if (_prevOriginState.current != null && _prevOriginState.current !== draft.origin_state) {
+                      setChangeOrderOpen(true);
+                      setChangeOrderReason("Pickup location / route changed.");
+                    }
+                    if (_prevDestState.current != null && _prevDestState.current !== draft.destination_state) {
+                      setChangeOrderOpen(true);
+                      setChangeOrderReason("Delivery location / route changed.");
+                    }
+                    _prevOriginState.current = draft.origin_state;
+                    _prevDestState.current = draft.destination_state;
+                  }}>Save</button>
                 </div>
               </>
             )}
@@ -1964,7 +2087,21 @@ return (
                 <F label="Special Terms"><input className="crm-input" value={draft.special_terms} onChange={setD("special_terms")} /></F>
                 <div className="crm-modal-foot">
                   <button className="crm-chip" onClick={closeModal}>Cancel</button>
-                  <button className="crm-ab primary" onClick={() => { saveGuarded({}, "Saved."); closeModal(); }}>Save</button>
+                  <button className="crm-ab primary" onClick={() => {
+                    saveGuarded({}, "Pricing saved.");
+                    closeModal();
+                    // If tariff or carrier pay changed, show Change Order
+                    if (_prevTariff.current != null && _prevTariff.current !== draft.total_tariff) {
+                      setChangeOrderOpen(true);
+                      setChangeOrderReason("Price / tariff changed.");
+                    }
+                    if (_prevCarrier.current != null && _prevCarrier.current !== draft.carrier_pay) {
+                      setChangeOrderOpen(true);
+                      setChangeOrderReason("Carrier pay changed.");
+                    }
+                    _prevTariff.current = draft.total_tariff;
+                    _prevCarrier.current = draft.carrier_pay;
+                  }}>Save</button>
                 </div>
               </>
             )}
@@ -2283,8 +2420,99 @@ return (
                   </div>
                 </div>
                 </div>
-                )}
-                </main>
+              )}
+
+              {/* Import Leads Modal */}
+              {importOpen && (
+                <div className="crm-modal" style={{ zIndex: 220 }}>
+                  <div className="crm-modal-in">
+                    <div className="crm-modal-h">
+                      <span>Import Leads</span>
+                      <button className="crm-modal-x" onClick={() => setImportOpen(false)}>✕</button>
+                    </div>
+                    <div className="crm-modal-b">
+                      {importDone === null && (
+                        <>
+                          <div className="crm-muted" style={{ marginBottom: 12 }}>
+                            Paste a Name,Phone table or upload a .xlsx/.pdf. Each row becomes a new lead assigned to you.
+                          </div>
+                          <label>Paste table (Name, Phone, Email, Origin, Destination, Year, Make, Model, Notes — first row is header)</label>
+                          <textarea className="crm-input" rows={10} value={importText} onChange={(e) => setImportText(e.target.value)} placeholder={"Name,Phone,Email,Origin,Destination\nJohn Doe,5551234567,john@email.com,Houston TX,Miami FL\nJane Smith,5559876543,jane@email.com,Dallas TX,LA CA"} />
+                          <div className="crm-muted" style={{ marginTop: 8, marginBottom: 12 }}>or upload a file (max 500 rows)</div>
+                          <label>File</label>
+                          <input type="file" accept=".xlsx,.xls,.pdf,.csv,.txt" onChange={(e) => {
+                            const f = e.target.files?.[0]; if (!f) return;
+                            setImportFileName(f.name);
+                            const reader = new FileReader();
+                            reader.onload = () => {
+                              // Strip data URL prefix to get raw base64 for the API
+                              const raw = reader.result;
+                              const base64 = typeof raw === "string" && raw.includes(",") ? raw.split(",")[1] : raw;
+                              setImportFile(base64);
+                            };
+                            reader.readAsDataURL(f);
+                          }} />
+                          {importFile && <div className="crm-muted" style={{ marginTop: 4 }}>Selected: {importFileName}</div>}
+                        </>
+                      )}
+                      {importDone === "loading" && (
+                        <div className="crm-muted" style={{ padding: 20, textAlign: "center" }}>Importing…</div>
+                      )}
+                      {Array.isArray(importDone) && (
+                        <div className="crm-import-result" style={{ padding: 12 }}>
+                          <div>Imported: <b>{importDone.inserted}</b> &nbsp; Skipped: <b>{importDone.skipped}</b></div>
+                          {importDone.truncated && <div className="crm-muted">Truncated to {MAX_ROWS} rows.</div>}
+                          {importDone.errors?.length > 0 && (
+                            <div className="crm-muted" style={{ fontSize: 13, marginTop: 8 }}>
+                              Errors:
+                              {importDone.errors.slice(0, 10).map((e, i) => (
+                                <div key={i} style={{ paddingLeft: 12 }}>Row {e.row}: {e.reason}</div>
+                              ))}
+                              {importDone.errors.length > 10 && <div style={{ paddingLeft: 12 }}>…and {importDone.errors.length - 10} more</div>}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    <div className="crm-modal-foot">
+                      {importDone === null && (
+                        <>
+                          <button className="crm-ab" onClick={clearImport}>Clear</button>
+                          <button className="crm-ab primary" disabled={(!importText && !importFile)} onClick={doImport}>Import</button>
+                        </>
+                      )}
+                      {Array.isArray(importDone) && (
+                        <button className="crm-ab primary" onClick={() => { setImportOpen(false); clearImport(); }}>Done</button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+              {/* CHANGE ORDER MODAL — shown when a change requires client approval (price change, route change, vehicle change, status change) */}
+              {changeOrderOpen && (
+                <div className="crm-modal-overlay" onClick={() => { setChangeOrderOpen(false); setChangeOrderReason(""); }}>
+                  <div className="crm-modal" onClick={(e) => e.stopPropagation()}>
+                    <div className="crm-modal-h">Change Order</div>
+                    <div className="crm-veh-body">
+                      <div className="crm-qp" style={{ marginBottom: 12 }}>
+                        <span className="crm-muted">A change has been made that requires client approval before the shipment proceeds.</span>
+                      </div>
+                      <div className="crm-qp">
+                        <label className="crm-lbl">Reason for change</label>
+                        <textarea className="crm-input" rows={3} placeholder="e.g. Price adjusted, route changed, vehicle added/modified, status changed…" value={changeOrderReason} onChange={(e) => setChangeOrderReason(e.target.value)} />
+                      </div>
+                      <div className="crm-muted" style={{ fontSize: 12, marginTop: 8 }}>
+                        Order #{open.id} · {draft.name} · {draft.vehicles?.length ? [draft.vehicles[0].year, draft.vehicles[0].make, draft.vehicles[0].model].filter(Boolean).join(" ") : "No vehicle"} · {draft.origin_state} → {draft.destination_state}
+                      </div>
+                    </div>
+                    <div className="crm-modal-foot">
+                      <button className="crm-chip" onClick={() => { setChangeOrderOpen(false); setChangeOrderReason(""); }}>Cancel</button>
+                      <button className="crm-ab primary" onClick={() => { setChangeOrderOpen(false); setChangeOrderReason(""); }}>Confirm Change Order</button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </main>
       </div>
     </div>
   );
