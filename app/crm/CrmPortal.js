@@ -290,6 +290,7 @@ export default function CrmPortal() {
   const [vehSaving, setVehSaving] = useState(false);
   const [vehMsg, setVehMsg] = useState(null);
   const [vinModal, setVinModal] = useState(false); // VIN lookup / add vehicle modal
+  const [modal, setModal] = useState(null); // which edit modal is open: "shipment"|"origin"|"destination"|"customer"|"pricing"|"booking"|"activitylog"
   const [noteKind, setNoteKind] = useState("internal");
   // Track previous pricing values for change-order detection
   const _prevTariff = useRef(null);
