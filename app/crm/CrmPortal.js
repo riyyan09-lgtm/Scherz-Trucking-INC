@@ -622,7 +622,11 @@ export default function CrmPortal() {
       setBusy(false);
     }
   }
-  async function saveVehicle(v) { await api("/api/crm/vehicles", { method: "PATCH", body: JSON.stringify(v) }); loadVehicles(openId); }
+  async function saveVehicle(v) {
+    const method = v.id ? "PATCH" : "POST";
+    await api("/api/crm/vehicles", { method, body: JSON.stringify(v) });
+    loadVehicles(openId);
+  }
   function closeVehModal() { setEditingVeh(null); setVehDraft(null); setVehMsg(null); setVinModal(false); }
   async function saveVehDraft() {
     if (!vehDraft) return;
@@ -1687,7 +1691,15 @@ return (
                       <div className="crm-modal-overlay" onClick={() => setVinModal(false)}>
                         <div className="crm-modal" onClick={(e) => e.stopPropagation()}>
                           <div className="crm-modal-h">Add Vehicle</div>
+                          {vehMsg && <div className="crm-muted" style={{ marginBottom: 6, fontSize: 13 }}>{vehMsg}</div>}
                           <div className="crm-veh-body">
+                            <div className="crm-qp">
+                              <label>VIN (optional - auto-fills Year/Make/Model)</label>
+                              <div className="crm-flex-row">
+                                <input className="crm-input" placeholder="VIN to decode…" value={vehDraft.vin || ""} onChange={(e) => setVehDraft({ ...vehDraft, vin: e.target.value })} />
+                                <button className="crm-chip" onClick={async () => { if (!vehDraft.vin.trim()) return; setVehMsg("Decoding VIN…"); try { const r = await api("/api/crm/vin?vin=" + encodeURIComponent(vehDraft.vin.trim())); if (r && r.year) setVehDraft({ ...vehDraft, year: r.year, make: r.make, model: r.model, vin: vehDraft.vin }); setVehMsg("VIN decoded"); } catch { setVehMsg("VIN decode failed"); } }}>Decode VIN</button>
+                              </div>
+                            </div>
                             <div className="crm-qp">
                               <label>Year</label>
                               <input className="crm-input" type="number" value={vehDraft.year || ""} onChange={(e) => setVehDraft({ ...vehDraft, year: Number(e.target.value) || null })} />
