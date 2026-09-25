@@ -3,12 +3,12 @@
 
 .crm-root, .crm-login {
   /* surfaces — Nocturne ground */
-  --bg: #101120; --panel: #1A1C2B; --panel2: #20222F; --line: #242737;
-  --sidebar: #0D0E1A;
+  --bg: #0B1E3D; --panel: #0F2247; --panel2: #142854; --line: #1A2E5A;
+  --sidebar: #091730;
   /* text */
-  --text: #E9E9ED; --muted: #9AA0B5; --faint: #626A80;
-  /* accent — blurple */
-  --accent: #9184D9; --accent-300: #C3BAFD; --accent-700: #4A3F86; --accent-800: #3A2F6B; --accent-ink: #12141F;
+  --text: #E8E8ED; --muted: #9AA0B5; --faint: #626A80;
+  /* accent — gold */
+  --accent: #D68C26; --accent-300: #E8B859; --accent-700: #B3711A; --accent-800: #8C5A12; --accent-ink: #FFFFFF;
   /* status */
   --ok: #8FD0A0; --warn: #E0C184; --bad: #D98FB0;
   /* four service hues */
@@ -52,7 +52,7 @@
 
 /* ---------- login (split screen) ---------- */
 .crm-login { min-height: 100vh; display: grid; grid-template-columns: 1fr 1fr; }
-.crm-login-left { background: radial-gradient(120% 90% at 0% 0%, #241F45 0%, #14121F 60%); padding: 80px 64px; display: flex; flex-direction: column; justify-content: center; }
+.crm-login-left { background: radial-gradient(120% 90% at 0% 0%, #0B1E3D 0%, #091730 60%); padding: 80px 64px; display: flex; flex-direction: column; justify-content: center; }
 .crm-login-left h1 { color: var(--text); font-size: 34px; line-height: 1.25; letter-spacing: -0.01em; max-width: 20ch; }
 .crm-login-sub { color: var(--muted); font-style: italic; margin: 16px 0 34px; max-width: 46ch; font-size: 15px; }
 .crm-login-left ul { list-style: none; display: flex; flex-direction: column; gap: 22px; max-width: 460px; }
@@ -319,6 +319,7 @@ select.crm-filter { width: 130px; text-transform: none; cursor: pointer; }
 .crm-call-big { width: 100%; margin-top: 8px; background: var(--ok); color: #04130c; border: none; border-radius: 9px; padding: 11px; font-weight: 800; font-size: 14px; cursor: pointer; letter-spacing: 0.02em; }
 .crm-call-big:hover { filter: brightness(1.07); }
 .crm-qp { display: flex; flex-wrap: wrap; gap: 5px; }
+.crm-flex-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .crm-chip { background: var(--panel2); border: 1px solid var(--line); color: var(--text); border-radius: 7px; padding: 5px 10px; font-size: 12px; cursor: pointer; }
 .crm-chip:hover { border-color: var(--accent); }
 .crm-mini { background: none; border: 1px solid var(--line); color: var(--muted); border-radius: 6px; padding: 2px 6px; font-size: 11px; cursor: pointer; }
