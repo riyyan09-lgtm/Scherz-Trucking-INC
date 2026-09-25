@@ -1702,11 +1702,18 @@ return (
                             </div>
                             <div className="crm-qp">
                               <label>Year</label>
-                              <input className="crm-input" type="number" value={vehDraft.year || ""} onChange={(e) => setVehDraft({ ...vehDraft, year: Number(e.target.value) || null })} />
+                              <select className="crm-input" value={vehDraft.year || ""} onChange={(e) => setVehDraft({ ...vehDraft, year: e.target.value ? Number(e.target.value) : null })}>
+                                <option value="">Vehicle year</option>
+                                {Array.from({ length: 78 }, (_, i) => 2027 - i).map((y) => <option key={y} value={y}>{y}</option>)}
+                              </select>
                             </div>
                             <div className="crm-qp">
                               <label>Make</label>
-                              <input className="crm-input" value={vehDraft.make || ""} onChange={(e) => setVehDraft({ ...vehDraft, make: e.target.value })} />
+                              <select className="crm-input" value={vehDraft.make || ""} onChange={(e) => setVehDraft({ ...vehDraft, make: e.target.value })}>
+                                <option value="">Vehicle make</option>
+                                {["Acura","Audi","BMW","Buick","Cadillac","Chevrolet","Chrysler","Dodge","Ford","Genesis","GMC","Honda","Hyundai","Infiniti","Jaguar","Jeep","Kia","Land Rover","Lexus","Lincoln","Mazda","Mercedes-Benz","MINI","Mitsubishi","Nissan","Polestar","Porsche","Ram","Rivian","Subaru","Tesla","Toyota","Volkswagen","Volvo"].map((m) => <option key={m} value={m}>{m}</option>)}
+                                <option value="__other">Other…</option>
+                              </select>
                             </div>
                             <div className="crm-qp">
                               <label>Model</label>
@@ -1715,7 +1722,7 @@ return (
                           </div>
                           <div className="crm-modal-foot">
                             <button className="crm-chip" onClick={() => setVinModal(false)}>Cancel</button>
-                            <button className="crm-ab primary" onClick={() => { setVinModal(false); saveVehDraft(); }}>Save Vehicle</button>
+                            <button className="crm-ab primary" onClick={() => { saveVehDraft().then(() => setVinModal(false)); }}>Save Vehicle</button>
                           </div>
                         </div>
                       </div>
@@ -1729,7 +1736,7 @@ return (
                       <div className="crm-veh-head">
                         <b>{[v.year, v.make, v.model].filter(Boolean).join(" ") || "Vehicle #" + (i + 1)}</b>
                         <span className={v.running ? "crm-run-ok" : "crm-run-inop"}>{v.running ? "Runs" : "Inop"}</span>
-                        <button className="crm-ico" style={{ marginLeft: "auto" }} title="Edit vehicle" onClick={() => { setEditingVeh(v.id); setVehDraft({ ...v }); setVehMsg(null); }}>✎</button>
+                        <button className="crm-ico" style={{ marginLeft: "auto" }} title="Edit vehicle" onClick={() => { setEditingVeh(v.id); setVehDraft({ ...v }); setVehMsg(null); setVinModal(true); }}>✎</button>
                       </div>
                       <div className="crm-veh-grid crm-veh-cols">
                         <div className="crm-veh-col">
